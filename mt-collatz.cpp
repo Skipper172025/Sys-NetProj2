@@ -12,12 +12,14 @@
 #include <thread>
 #include <string>
 #include <cstdlib>
+#include <mutex>
 
 
 const int MAX_STOP = 1000;
 
 // Global shared data
-
+std::mutex counterMutex;
+std::mutex histogramMutex;
 long COUNTER = 1;
 long N = 0;
 
@@ -46,6 +48,8 @@ int computeStoppingTime(long n) {
 void worker() {
     while (true) {
         // TODO(Part B): lock here so only one thread reads/increments COUNTER
+        std::lock_guard<std::mutex> lock(counterMutex);
+
         long myNumber = COUNTER;
         COUNTER++;
         // TODO(Part B): unlock here
@@ -59,6 +63,8 @@ void worker() {
 
         // TODO(Part B): lock here so only one thread updates the histogram
         if (stoppingTime <= MAX_STOP) {
+            std::lock_guard<std::mutex> lock(histogramMutex);
+            
             histogram[stoppingTime]++;
         }
         // TODO(Part B): unlock here
