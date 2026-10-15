@@ -13,6 +13,7 @@
 #include <string>
 #include <cstdlib>
 #include <mutex>
+#include <cstring>
 
 
 const int MAX_STOP = 1000;
@@ -47,27 +48,38 @@ int computeStoppingTime(long n) {
 
 void worker() {
     while (true) {
-        // TODO(Part B): lock here so only one thread reads/increments COUNTER
-        std::lock_guard<std::mutex> lock(counterMutex);
+        long myNumber;
 
-        long myNumber = COUNTER;
-        COUNTER++;
-        // TODO(Part B): unlock here
+        // Protect the shared counter
+        if (useLock) {
+            std::lock_guard<std::mutex> lock(counterMutex);
 
-        // stop once every number up to and including N has been claimed
+            myNumber = COUNTER;
+            COUNTER++;
+        }
+        else {
+            myNumber = COUNTER;
+            COUNTER++;
+        }
+
+        // Stop when all numbers have been claimed
         if (myNumber > N) {
             break;
         }
 
+        // Compute without holding the counter mutex
         int stoppingTime = computeStoppingTime(myNumber);
 
-        // TODO(Part B): lock here so only one thread updates the histogram
+        // Protect the shared histogram
         if (stoppingTime <= MAX_STOP) {
-            std::lock_guard<std::mutex> lock(histogramMutex);
-            
-            histogram[stoppingTime]++;
+            if (useLock) {
+                std::lock_guard<std::mutex> lock(histogramMutex);
+                histogram[stoppingTime]++;
+            }
+            else {
+                histogram[stoppingTime]++;
+            }
         }
-        // TODO(Part B): unlock here
     }
 }
 
@@ -80,6 +92,17 @@ int main(int argc, char* argv[]) {
 
     N = std::atol(argv[1]);
     int T = std::atoi(argv[2]);
+
+    //Disable mutex locking if -nolock is provided
+    if (argc ==4) {
+        if (std::strcmp(argv[3], "-nolock") == 0) {
+            useLock = false;
+        }
+        else {
+            std::cerr << "Invalid option: " << argv[3] << std::endl;
+            return 1;
+        }
+    }
 
     if (N < 1 || T < 1) {
         std::cerr << "N and T must be positive integers" << std::endl;
