@@ -14,6 +14,8 @@
 #include <cstdlib>
 #include <mutex>
 #include <cstring>
+#include <ctime>
+#include <iomanip>
 
 
 const int MAX_STOP = 1000;
@@ -109,7 +111,8 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    // TODO(Part B): start the timer here
+    struct timespec startTime, endTime;
+    clock_gettime(CLOCK_MONOTONIC, &startTime);
 
     std::vector<std::thread> threads;
     for (int i = 0; i < T; i++) {
@@ -120,7 +123,17 @@ int main(int argc, char* argv[]) {
         threads[i].join();
     }
 
-    // TODO(Part B): stop the timer and print N,T,time to stderr here
+    clock_gettime(CLOCK_MONOTONIC, &endTime);
+    long seconds = endTime.tv_sec - startTime.tv_sec;
+    long nanoseconds = endTime.tv_nsec - startTime.tv_nsec;
+
+    if (nanoseconds < 0) {
+        seconds--;
+        nanoseconds += 1000000000L;
+    }
+
+    std::cerr << N << "," << T << "," << seconds << "." <<
+    std::setfill('0') << std::setw(9) << nanoseconds << std::endl;
 
     // print the histogram
     for (int k = 0; k <= MAX_STOP; k++) {
