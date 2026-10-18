@@ -1,6 +1,7 @@
 /**
  *  mt-collatz.cpp
  *  Sarah Pierpoint
+ *  Melanie Vogt
  *  This file implements a multi-threaded Collatz stopping time generator. It
  *  launches T worker threads that each claim numbers from 1 to N, compute
  *  their Collatz stopping times, and tally them in a shared histogram that is
